@@ -12,8 +12,11 @@ app.use(cors());
 
 app.get('/api/inventory', (req, res) => {
   const { brand, duration } = req.query;
-  const results = [];
   const now = new Date();
+
+  res.setHeader('Content-Type', 'application/json');
+  res.write('['); 
+  let firstRow = true;
 
   fs.createReadStream(csvFilePath)
     .pipe(csv())
@@ -32,11 +35,16 @@ app.get('/api/inventory', (req, res) => {
       }
 
       if (include) {
-        results.push(row);
+        if (!firstRow) {
+          res.write(',');
+        }
+        res.write(JSON.stringify(row));
+        firstRow = false;
       }
     })
     .on('end', () => {
-      res.json(results);
+      res.write(']');
+      res.end();
     })
     .on('error', (err) => {
       res.status(500).json({ error: err.message });
